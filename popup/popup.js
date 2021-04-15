@@ -63,7 +63,7 @@ function handleError(err) {
 }
 
 function getFilenameFromURL(url) {
-	return url.split("/").pop().split("#")[0].split("?")[0];
+	return url.split("#")[0].split("/").pop().split("?")[0];
 }
 
 function createElement(tag, content) {
@@ -90,7 +90,7 @@ function displayURLs(urls) {
 
 	let addPreviousPart = false;
 
-	let deduplicatedFilenames = [...new Set(urls.forEach(getFilenameFromURL))];
+	let deduplicatedFilenames = [...new Set(urls.map(getFilenameFromURL))];
 	if (deduplicatedFilenames.length != urls.length) {
 		console.debug("Found duplicate filenames. addPreviousPart = true");
 		paraLegend.appendChild(createElement("br"));
