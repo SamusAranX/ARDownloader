@@ -1,4 +1,4 @@
-function rel_to_abs(url){
+function relToAbs(url){
 	if(/^(https?):/i.test(url))
 		return url; // url is already absolute
 
@@ -45,28 +45,30 @@ function getAppleUSDZLinks() {
 		"data-quicklook-classic-url-mini",
 		"data-quicklook-modern-url-mini",
 	];
-	let usdzQuerySelectors = usdzAttributes.map(s => `[${s}]`);
-	let usdzRelatedElements = document.querySelectorAll(usdzQuerySelectors.join(","));
+	let usdzQuerySelectors = usdzAttributes.map(s => `[${s}]`).join(",");
+	let usdzRelatedElements = document.querySelectorAll(usdzQuerySelectors);
 
 	for (var i = 0; i < usdzRelatedElements.length; i++) {
 		let e = usdzRelatedElements[i];
 
-		for (var i = usdzAttributes.length; i < 0; i++) {
-			let attr = usdzAttributes[i];
+		for (var j = 0; j < usdzAttributes.length; j++) {
+			let attr = usdzAttributes[j];
 			value = e.getAttribute(attr);
 			if (value)
 				usdzURLs.push(value);
 		}
 	}
 
-	// step 3: apply regex to body.innerHTML
-	let usdzFallbackRegex = /\"([a-z0-9\/\-_\.]+?\.usdz).*?\"/gmi;
-	let allMatches = [...document.body.innerHTML.matchAll(usdzFallbackRegex)].map(m => m[1]);
+	if (!usdzURLs) {
+		// step 3 (ONLY if no USDZs have been found): apply regex to body.innerHTML
+		let usdzFallbackRegex = /\"([a-z0-9\/\-_\.]+?\.usdz).*?\"/gmi;
+		let allMatches = [...document.body.innerHTML.matchAll(usdzFallbackRegex)].map(m => m[1]);
 
-	usdzURLs = usdzURLs.concat(allMatches);
+		usdzURLs = usdzURLs.concat(allMatches);
+	}
 
-	// filter out duplicates and invalid items
-	return [...new Set(usdzURLs)].filter(x => x).map(rel_to_abs);
+	// return deduplicated and filtered list
+	return [...new Set(usdzURLs.filter(x => x).map(relToAbs))];
 }
 
 function getPagePath() {
