@@ -1,0 +1,104 @@
+* { box-sizing: border-box; outline: none; }
+html, body {
+	font-size: 11pt;
+}
+body {
+	display: flex;
+	flex-direction: column;
+
+	/*font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";*/
+	font-family: "Inter var";
+
+	margin: 0;
+	width: 480px;
+}
+
+body.error, body.empty {
+	width: 350px;
+}
+body.error div.container {
+	display: none;
+}
+body.error div.container.error {
+	display: block !important;
+}
+
+body.empty p.info ~ * {
+	display: none !important;
+}
+
+header {
+	background: #111111;
+	height: 44px;
+	width: 100%;
+	padding: 5px;
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+header img.icon {
+	height: 32px;
+}
+header h1 {
+	color: #fff;
+	font-size: 1.75rem;
+	margin: 0 0 0 0.25em;
+}
+
+p {
+	margin: 0;
+}
+
+div.container.error {
+	display: none;
+
+	background: rgb(255, 59, 48);
+	color: #fff;
+	font-weight: bold;
+	padding: 5px;
+	width: 100%;
+}
+
+
+div.container {
+	padding: 5px;
+}
+div.container > *:not(:first-child) {
+	margin-top: 5px;
+}
+
+#url-list {
+	border-width: 1px;
+
+	font-family: monospace;
+	width: 100%;
+
+	padding: 5px;
+
+	overflow-y: auto;
+}
+
+#button-bar {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+#button-bar button {
+	flex-grow: 1;
+
+	background: rgb(0, 122, 255);
+	border: none;
+	border-radius: 5px;
+	color: #fff;
+	font-family: inherit;
+	font-weight: 600;
+
+	padding: 5px;
+}
+#button-bar button:hover {
+	background: rgb(10, 132, 255);
+}
+#button-bar button:not(:first-child) {
+	margin-left: 5px;
+}
