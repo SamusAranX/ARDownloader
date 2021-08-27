@@ -1,9 +1,11 @@
 chrome.webNavigation.onCompleted.addListener(details => {
-	if (!/^https:\/\/(?:.+\.)?apple\.com\/?.*?$/gmi.test(details.url))
+	let activeTab = details.tabId;
+
+	if (!/^https:\/\/(?:.+\.)?apple\.com\/?.*?$/gmi.test(details.url)) {
 		return;
+	}
 
 	try {
-		let activeTab = details.tabId;
 		chrome.scripting.executeScript({
 			files: ["script/script.js"],
 			target: { tabId: activeTab }
@@ -15,8 +17,9 @@ chrome.webNavigation.onCompleted.addListener(details => {
 			let result = injectionResults[0];
 			let numURLs = result.result.urls.length;
 
-			if (numURLs == 0)
+			if (numURLs == 0) {
 				return;
+			}
 
 			chrome.action.setBadgeText({
 				"tabId": activeTab,
@@ -24,6 +27,6 @@ chrome.webNavigation.onCompleted.addListener(details => {
 			});
 		});
 	} catch (exc) {
-		console.error(exc)
+		console.error(exc);
 	}
 });

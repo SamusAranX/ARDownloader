@@ -2,14 +2,18 @@
 	"manifest_version": 3,
 	"name": "USDZ Grabber",
 	"author": "Emma Alyx Wunder",
-	"description": "Grabs all USDZ files from a given apple.com product page",
-	"version": "1.1",
+	"description": "Grabs all USDZ files from a given apple.com/apple.com.cn product page",
+	"version": "1.2",
 	"permissions": ["clipboardWrite", "downloads", "scripting", "webNavigation"],
 	"host_permissions": [
 		"https://apple.com/*",
 		"https://*.apple.com/*",
-		"https://web.archive.org/web/*/https://apple.com/*/",
-		"https://web.archive.org/web/*/https://*.apple.com/*/"
+		"https://apple.com.cn/*",
+		"https://*.apple.com.cn/*",
+		"https://web.archive.org/web/*/https://apple.com/*",
+		"https://web.archive.org/web/*/https://*.apple.com/*",
+		"https://web.archive.org/web/*/https://apple.com.cn/*",
+		"https://web.archive.org/web/*/https://*.apple.com.cn/*"
 	],
 	"action": {
 		"default_icon": {
