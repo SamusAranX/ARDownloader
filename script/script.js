@@ -24,11 +24,11 @@ function relToAbs(url){
 	return url;
 }
 
-function getAppleUSDZLinks() {
-	let usdzURLs = [];
+function getAppleARLinks() {
+	let arURLs = [];
 
 	// step 1: finding all <a> elements with rel=ar set
-	usdzURLs = Array.from(document.querySelectorAll("a[rel=ar]")).map(e => {
+	arURLs = Array.from(document.querySelectorAll("a[rel=ar]")).map(e => {
 		let value = e.href;
 		if (value)
 			return value;
@@ -36,8 +36,8 @@ function getAppleUSDZLinks() {
 		return null;
 	});
 
-	// step 2: finding other elements that might hold URLs to USDZ files
-	let usdzAttributes = [
+	// step 2: finding other elements that might hold URLs to AR files
+	let arAttributes = [
 		"data-quicklook-classic-url",
 		"data-quicklook-modern-url",
 		"data-quicklook-classic-url-pro-max",
@@ -45,30 +45,30 @@ function getAppleUSDZLinks() {
 		"data-quicklook-classic-url-mini",
 		"data-quicklook-modern-url-mini",
 	];
-	let usdzQuerySelectors = usdzAttributes.map(s => `[${s}]`).join(",");
-	let usdzRelatedElements = document.querySelectorAll(usdzQuerySelectors);
+	let arQuerySelectors = arAttributes.map(s => `[${s}]`).join(",");
+	let arRelatedElements = document.querySelectorAll(arQuerySelectors);
 
-	for (var i = 0; i < usdzRelatedElements.length; i++) {
-		let e = usdzRelatedElements[i];
+	for (var i = 0; i < arRelatedElements.length; i++) {
+		let e = arRelatedElements[i];
 
-		for (var j = 0; j < usdzAttributes.length; j++) {
-			let attr = usdzAttributes[j];
+		for (var j = 0; j < arAttributes.length; j++) {
+			let attr = arAttributes[j];
 			value = e.getAttribute(attr);
 			if (value)
-				usdzURLs.push(value);
+				arURLs.push(value);
 		}
 	}
 
-	if (!usdzURLs) {
-		// step 3 (ONLY if no USDZs have been found): apply regex to body.innerHTML
-		let usdzFallbackRegex = /\"([a-z0-9\/\-_\.]+?\.usdz).*?\"/gmi;
-		let allMatches = [...document.body.innerHTML.matchAll(usdzFallbackRegex)].map(m => m[1]);
+	if (!arURLs) {
+		// step 3 (ONLY if no files have been found): apply regex to body.innerHTML
+		let arFallbackRegex = /\"([a-z0-9\/\-_\.]+?\.(?:usdz|reality))\"/gmi;
+		let allMatches = [...document.body.innerHTML.matchAll(arFallbackRegex)].map(m => m[1]);
 
-		usdzURLs = usdzURLs.concat(allMatches);
+		arURLs = arURLs.concat(allMatches);
 	}
 
 	// return deduplicated and filtered list
-	return [...new Set(usdzURLs.filter(x => x).map(relToAbs))];
+	return [...new Set(arURLs.filter(x => x).map(relToAbs))];
 }
 
 function getPagePath() {
@@ -79,7 +79,7 @@ function getPagePath() {
 
 function returnValue() {
 	return {
-		urls: getAppleUSDZLinks(),
+		urls: getAppleARLinks(),
 		path: getPagePath()
 	}
 }
