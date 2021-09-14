@@ -13,10 +13,10 @@ window.onload = function() {
 	btnDownloadAll = document.querySelector("#btn-download-all");
 
 	paraErrorMessage = document.querySelector("#error-message");
-	spanURLNumber = document.querySelector("p.info.num-urls span");
-	paraLegend = document.querySelector("p.info.legend");
-	spanLegend = paraLegend.querySelector("span");
-	selURLsList = document.querySelector("#url-list");
+	spanURLNumber    = document.querySelector("p.info.num-urls span");
+	paraLegend       = document.querySelector("p.info.legend");
+	spanLegend       = paraLegend.querySelector("span");
+	selURLsList      = document.querySelector("#url-list");
 
 	btnCopySel.addEventListener("click", copySelectedURLs);
 	btnCopyAll.addEventListener("click", copyAllURLs);
