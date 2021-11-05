@@ -1,4 +1,10 @@
-function relToAbs(url){
+function debugList(arr) {
+	for (var i = 0; i < arr.length; i++) {
+		console.log(arr[i]);
+	}
+}
+
+function relToAbs(url) {
 	if(/^(https?):/i.test(url))
 		return url; // url is already absolute
 
@@ -24,6 +30,23 @@ function relToAbs(url){
 	return url;
 }
 
+function getPagePath() {
+	let parts = window.location.href.split('/');
+	let lastPart = parts.pop() || parts.pop();
+	return lastPart.split('#')[0].split('?')[0];
+}
+
+function getUrlLastElement(url) {
+	let from = url.lastIndexOf("/");
+	return url.substring(from + 1).split('#')[0].split('?')[0];
+}
+
+function urlWithoutLastElement(url) {
+	let to = url.lastIndexOf("/");
+	to = to == -1 ? url.length : to + 1;
+	return url.substring(0, to);
+}
+
 function getAppleARLinks() {
 	let arURLs = [];
 
@@ -38,12 +61,17 @@ function getAppleARLinks() {
 
 	// step 2: finding other elements that might hold URLs to AR files
 	let arAttributes = [
+		"data-quicklook-url",
 		"data-quicklook-classic-url",
 		"data-quicklook-modern-url",
 		"data-quicklook-classic-url-pro-max",
 		"data-quicklook-modern-url-pro-max",
 		"data-quicklook-classic-url-mini",
 		"data-quicklook-modern-url-mini",
+		"data-quicklook-udz",
+		"data-quicklook-udz-promax",
+		"data-quicklook-udz-mini",
+
 	];
 	let arQuerySelectors = arAttributes.map(s => `[${s}]`).join(",");
 	let arRelatedElements = document.querySelectorAll(arQuerySelectors);
@@ -67,14 +95,36 @@ function getAppleARLinks() {
 		arURLs = arURLs.concat(allMatches);
 	}
 
-	// return deduplicated and filtered list
-	return [...new Set(arURLs.filter(x => x).map(relToAbs))];
-}
+	let parentURL = null;
+	for (var i = 0; i < arURLs.length; i++) {
+		let url = arURLs[i];
+		if (!url.startsWith("http"))
+			continue; // url has no parent to extract. skip
 
-function getPagePath() {
-	let parts = window.location.href.split('/');
-	let lastPart = parts.pop() || parts.pop();
-	return lastPart.split('#')[0].split('?')[0];
+		let parentTest = urlWithoutLastElement(url);
+		if (parentTest != url) {
+			parentURL = parentTest;
+			break;
+		}
+	}
+
+	if (parentURL) {
+		for (var i = 0; i < arURLs.length; i++) {
+			let url = arURLs[i];
+			if (url.startsWith("http"))
+				continue; // url is already absolute. skip
+
+			arURLs[i] = parentURL + getUrlLastElement(url);
+		}
+
+		arURLs = arURLs.sort();
+		debugList(arURLs);
+		return arURLs;
+	} else {
+		// return deduplicated and filtered list
+		console.log("fallback filter");
+		return [...new Set(arURLs.filter(x => x).map(relToAbs))];
+	}
 }
 
 function returnValue() {
