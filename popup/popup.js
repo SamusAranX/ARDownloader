@@ -60,7 +60,7 @@ function handleError(err) {
 	btnDownloadSel.disabled = true;
 	btnDownloadAll.disabled = true;
 
-	console.debug(chrome.runtime.lastError);
+	console.error(chrome.runtime.lastError);
 
 	if (err)
 		paraErrorMessage.innerHTML = err;
