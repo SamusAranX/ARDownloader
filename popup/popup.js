@@ -1,27 +1,35 @@
 var downloadPath = "";
 
+var paraErrorMessage, spanURLNumber, paraLegend, selURLsList;
 var btnCopySel, btnCopyAll, btnDownloadSel, btnDownloadAll;
-var paraErrorMessage, spanURLNumber, selURLsList;
 
 const MIN_LIST_SIZE = 1;
 const MAX_LIST_SIZE = 15;
 
-window.onload = function() {
+function prepareUI() {
+	let manifest = chrome.runtime.getManifest();
+	document.title = manifest.name;
+	document.getElementById("ext-name").innerHTML = manifest.name;
+	document.getElementById("ext-version").innerHTML = `v${manifest.version}`;
+
+	paraErrorMessage = document.querySelector("#error-message");
+	spanURLNumber    = document.querySelector("p.info.num-urls span");
+	paraLegend       = document.querySelector("p.info.legend");
+	selURLsList      = document.querySelector("#url-list");
+
 	btnCopySel     = document.querySelector("#btn-copy-sel");
 	btnCopyAll     = document.querySelector("#btn-copy-all");
 	btnDownloadSel = document.querySelector("#btn-download-sel");
 	btnDownloadAll = document.querySelector("#btn-download-all");
 
-	paraErrorMessage = document.querySelector("#error-message");
-	spanURLNumber    = document.querySelector("p.info.num-urls span");
-	paraLegend       = document.querySelector("p.info.legend");
-	spanLegend       = paraLegend.querySelector("span");
-	selURLsList      = document.querySelector("#url-list");
-
 	btnCopySel.addEventListener("click", copySelectedURLs);
 	btnCopyAll.addEventListener("click", copyAllURLs);
 	btnDownloadSel.addEventListener("click", downloadSelectedFiles);
 	btnDownloadAll.addEventListener("click", downloadAllFiles);
+}
+
+window.onload = function() {
+	prepareUI();
 
 	try {
 		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {

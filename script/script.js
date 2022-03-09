@@ -1,6 +1,6 @@
 function debugList(arr) {
 	for (var i = 0; i < arr.length; i++) {
-		console.log(arr[i]);
+		console.debug(arr[i]);
 	}
 }
 
@@ -11,21 +11,28 @@ function getPagePath() {
 }
 
 function getAppleARLinks() {
-	let currentURL = new URL(window.location);
-	let currentHost = currentURL.protocol + "//" + currentURL.host;
-
 	let arURLs = [];
 
 	// step 1: finding all <a> elements with rel=ar set
+	console.debug("Step 1: a[rel=ar]");
 	arURLs = Array.from(document.querySelectorAll("a[rel=ar]")).map(e => {
-		let value = e.href;
+		let value = e.href; // expected to be absolute link
 		if (value)
 			return value;
 
 		return null;
 	});
 
+	let usdzPrefix = "";
+	if (arURLs) {
+		let tempURL = arURLs[0]
+		let tempFilename = tempURL.split("/").pop();
+		usdzPrefix = tempURL.substring(0, tempURL.length - tempFilename.length);
+	}
+	console.debug("usdz prefix:", usdzPrefix);
+
 	// step 2: finding other elements that might hold URLs to AR files
+	console.debug("Step 2: attributes");
 	let arAttributes = [
 		"data-quicklook-url",
 		"data-quicklook-classic-url",
@@ -55,6 +62,8 @@ function getAppleARLinks() {
 
 	if (!arURLs) {
 		// step 3 (ONLY if no files have been found): apply regex to body.innerHTML
+		console.debug("Step 3: regex");
+
 		let arFallbackRegex = /\"([a-z0-9\/\-_\.]+?\.(?:usdz|reality))\"/gmi;
 		let allMatches = [...document.body.innerHTML.matchAll(arFallbackRegex)].map(m => m[1]);
 
@@ -70,7 +79,7 @@ function getAppleARLinks() {
 			continue; // url is already absolute
 		}
 
-		let newURL = new URL(url, currentHost);
+		let newURL = new URL(url, usdzPrefix);
 		absURLs.push(newURL.href);
 	}
 
