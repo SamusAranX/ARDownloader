@@ -46,7 +46,7 @@ function getAppleARLinks() {
 		"data-quicklook-udz",
 		"data-quicklook-udz-promax",
 		"data-quicklook-udz-mini",
-
+		"data-ar-quicklook-usdz"
 	];
 	let arQuerySelectors = arAttributes.map(s => `[${s}]`).join(",");
 	let arRelatedElements = document.querySelectorAll(arQuerySelectors);
