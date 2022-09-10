@@ -16,6 +16,6 @@
     "nonew": true,
     "regexp": true,
     "undef": true,
-    "strict": true,
+    "strict": "global",
     "trailing": true
 }

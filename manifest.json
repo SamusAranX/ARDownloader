@@ -3,7 +3,7 @@
 	"name": "AR Downloader",
 	"author": "Emma Alyx Wunder",
 	"description": "Downloads all AR files from a given apple.com/apple.com.cn product page",
-	"version": "1.5",
+	"version": "1.5.1",
 	"permissions": ["clipboardWrite", "downloads", "scripting", "webNavigation"],
 	"host_permissions": [
 		"https://apple.com/*",

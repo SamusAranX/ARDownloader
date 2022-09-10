@@ -1,7 +1,7 @@
 /* globals chrome */
+"use strict";
 
 chrome.webNavigation.onCompleted.addListener(details => {
-	"use strict";
 	let activeTab = details.tabId;
 
 	if (!/^https:\/\/(?:.+\.)?apple\.com\/?.*?$/gmi.test(details.url)) {
