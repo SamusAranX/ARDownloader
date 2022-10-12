@@ -84,9 +84,9 @@ div.container > *:not(:first-child) {
 	font-family: monospace;
 	width: 100%;
 
-	padding: 5px;
+	padding: 0.66em;
 
-	overflow-y: auto;
+	overflow: auto;
 }
 
 #button-bar {
