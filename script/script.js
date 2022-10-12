@@ -62,6 +62,32 @@ function getAppleARLinks() {
 		}
 	}
 
+	// step 2.5: the data-ar-quicklook-attribs-by-model attribute might contain JSON containing more filenames
+	console.debug("Step 2.5: more attributes");
+	let arAttribsElements = document.querySelectorAll("[data-ar-quicklook-attribs-by-model]");
+
+	for (let i = 0; i < arAttribsElements.length; i++) {
+		let e = arAttribsElements[i];
+		let valueJSON = e.getAttribute("data-ar-quicklook-attribs-by-model");
+		if (!valueJSON)
+			continue;
+
+		console.debug(valueJSON);
+
+		try {
+			let topObj = JSON.parse(valueJSON);
+			for (let deviceKey in topObj) {
+				let deviceObj = topObj[deviceKey];
+				if (!deviceObj.hasOwnProperty("data-ar-quicklook-usdz"))
+					continue;
+
+				arURLs.push(deviceObj["data-ar-quicklook-usdz"]);
+			}
+		} catch(err) {
+			console.error(err);
+		}
+	}
+
 	if (arURLs.length === 0) {
 		// step 3 (ONLY if no files have been found): apply regex to body.innerHTML
 		console.debug("Step 3: regex");
