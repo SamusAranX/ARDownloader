@@ -4,7 +4,7 @@
 	"author": "Emma Alyx Wunder",
 	"homepage_url": "https://emmalyx.dev",
 	"description": "Downloads all AR files from a given Apple product page",
-	"version": "1.7",
+	"version": "1.7.1",
 	"permissions": ["clipboardWrite", "downloads", "scripting", "webNavigation"],
 	"host_permissions": [
 		"https://apple.com/*",

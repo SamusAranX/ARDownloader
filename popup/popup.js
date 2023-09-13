@@ -3,7 +3,7 @@
 
 var downloadPath = "";
 
-var paraErrorMessage, spanURLNumber, paraLegend, selURLsList;
+var divMessage, paraMessage, divInfo, spanURLNumber, selURLsList;
 var btnCopySel, btnCopyAll, btnDownloadSel, btnDownloadAll;
 
 const MIN_LIST_SIZE = 1;
@@ -44,15 +44,15 @@ function downloadAllFiles(e) {
 	downloadFromOptionList(selURLsList.options);
 }
 
-function prepareUI() {
-	let manifest = chrome.runtime.getManifest();
+function prepareUI(manifest) {
 	document.title = manifest.name;
 	document.getElementById("ext-name").innerHTML = manifest.name;
 	document.getElementById("ext-version").innerHTML = `v${manifest.version}`;
 
-	paraErrorMessage = document.querySelector("#error-message");
-	spanURLNumber    = document.querySelector("p.info.num-urls span");
-	paraLegend       = document.querySelector("p.info.legend");
+	divMessage       = document.querySelector("div.container.message");
+	paraMessage      = document.querySelector("#message");
+	divInfo          = document.querySelector("div.info");
+	spanURLNumber    = divInfo.querySelector("p.num-urls span");
 	selURLsList      = document.querySelector("#url-list");
 
 	btnCopySel     = document.querySelector("#btn-copy-sel");
@@ -66,20 +66,32 @@ function prepareUI() {
 	btnDownloadAll.addEventListener("click", downloadAllFiles);
 }
 
-function handleError(err) {
+function deadEnd() {
 	btnCopySel.disabled = true;
 	btnCopyAll.disabled = true;
 	btnDownloadSel.disabled = true;
 	btnDownloadAll.disabled = true;
 
-	console.error(chrome.runtime.lastError);
+	document.body.classList.add("dead-end");
+}
 
-	if (err)
-		paraErrorMessage.innerHTML = err;
-	else
-		paraErrorMessage.innerHTML = chrome.runtime.lastError.message;
+function handleUnsupportedSite() {
+	deadEnd();
 
-	document.body.classList.add("error");
+	paraMessage.innerHTML = "This extension only works on Apple product pages.";
+	document.body.classList.add("warning");
+}
+
+function handleError(err) {
+	deadEnd();
+
+	if (err) {
+		paraMessage.innerHTML = err;
+	} else {
+		paraMessage.innerHTML = "Something went wrong.";
+	}
+
+	divMessage.classList.add("error");
 }
 
 function getFilenameFromURL(url) {
@@ -97,15 +109,14 @@ function createElement(tag, content) {
 
 function displayURLs(urls) {
 	let numURLs = urls.length;
-
-	let fileWord = numURLs === 1 ? "file" : "files";
-	spanURLNumber.innerHTML = `<b>${numURLs}</b> ${fileWord} found.`;
-
 	if (numURLs === 0) {
+		spanURLNumber.innerHTML = `<b>No</b> files found.`;
 		document.body.classList.add("empty");
 		return;
 	}
 
+	let fileWord = numURLs === 1 ? "file" : "files";
+	spanURLNumber.innerHTML = `<b>${numURLs}</b> ${fileWord} found.`;
 	selURLsList.size = Math.min(MAX_LIST_SIZE, Math.max(MIN_LIST_SIZE, numURLs));
 
 	let addPreviousPart = false;
@@ -113,10 +124,11 @@ function displayURLs(urls) {
 	let deduplicatedFilenames = [...new Set(urls.map(getFilenameFromURL))];
 	if (deduplicatedFilenames.length !== urls.length) {
 		console.debug("Found duplicate filenames. addPreviousPart = true");
-		paraLegend.appendChild(createElement("br"));
-		paraLegend.appendChild(createElement("span", "Filenames have been altered to avoid filename collisions."));
+		divInfo.appendChild(createElement("p", "Filenames have been altered to avoid filename collisions."));
 		addPreviousPart = true;
 	}
+
+	let detectedFiveG = false;
 
 	urls.forEach(url => {
 		let filename;
@@ -129,6 +141,11 @@ function displayURLs(urls) {
 			filename = getFilenameFromURL(url);
 		}
 
+		if (!detectedFiveG && /5g/i.test(url)) {
+			detectedFiveG = true;
+			divInfo.appendChild(createElement("p", "<b>Note:</b> Some or all of these URLs are for US-only 5G models. Visit a non-US version of this product page to look for more files."));
+		}
+
 		let option = createElement("option", filename);
 		option.dataset.filename = filename;
 		option.value = url;
@@ -138,25 +155,40 @@ function displayURLs(urls) {
 }
 
 window.onload = function() {
-	prepareUI();
+	let manifest = chrome.runtime.getManifest();
+	prepareUI(manifest);
 
 	try {
 		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-			let activeTab = tabs[0].id;
-			chrome.scripting.executeScript({
-				files: ["script/script.js"],
-				target: { tabId: activeTab }
-			}, function (injectionResults) {
-				if (!injectionResults) {
-					handleError();
-					return;
-				}
+			let activeTab = tabs[0];
+			if (!activeTab.url) {
+				handleUnsupportedSite();
+				return;
+			}
 
-				let result = injectionResults[0];
+			chrome.scripting
+				.executeScript({
+					target: { tabId: activeTab.id },
+					files: ["script/script.js"],
+				})
+				.then(injectionResults => {
+					if (!injectionResults) {
+						handleError("Couldn't communicate with extension.");
+						return;
+					}
 
-				downloadPath = result.result.path;
-				displayURLs(result.result.urls);
-			});
+					let result = injectionResults[0];
+					if (result.result.error) {
+						handleError(result.result.error);
+						return;
+					}
+
+					downloadPath = result.result.path;
+					displayURLs(result.result.urls);
+				},
+				error => {
+					handleError(error);
+				});
 		});
 	} catch (exc) {
 		handleError(exc.message);

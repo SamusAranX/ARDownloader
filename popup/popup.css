@@ -1,3 +1,11 @@
+:root {
+	--red: #FF3B2F;
+	--orange: #FE9500;
+	--blue: #007AFF;
+	--blue-light: #0B84FF;
+	--indigo: #5856D7;
+}
+
 * { box-sizing: border-box; outline: none; }
 html, body {
 	font-size: 11pt;
@@ -12,22 +20,28 @@ body {
 	width: 480px;
 }
 
-body.error, body.empty {
+body.dead-end, body.empty {
 	width: 350px;
 }
-body.error div.container {
+body.dead-end div.container {
 	display: none;
 }
-body.error div.container.error {
+body.dead-end div.container.message {
 	display: block !important;
 }
 
-body.empty p.info ~ * {
+div.container.message.error {
+	background: var(--red);
+	color: white;
+	font-weight: bold;
+}
+
+body.empty div.info ~ * {
 	display: none !important;
 }
 
 header {
-	background: #111111;
+	background: #1C1C1E;
 	height: 44px;
 	width: 100%;
 	padding: 5px;
@@ -59,31 +73,31 @@ p {
 	margin: 0;
 }
 
-div.container.error {
+div.container.message {
 	display: none;
 
-	background: rgb(255, 59, 48);
-	color: #fff;
 	font-weight: bold;
 	padding: 5px;
 	width: 100%;
 }
 
-
+div.container,
+div.container div.info {
+	display: flex;
+	flex-flow: column nowrap;
+	gap: 5px;
+}
 div.container {
 	padding: 5px;
-}
-div.container > *:not(:first-child) {
-	margin-top: 5px;
 }
 
 #url-list {
 	border-width: 1px;
 
-	font-family: monospace;
+	font-family: "JetBrains Mono", "Iosevka", Consolas, Menlo, monospace;
 	width: 100%;
 
-	padding: 0.66em;
+	padding: 0.5em;
 
 	overflow: auto;
 }
@@ -96,17 +110,18 @@ div.container > *:not(:first-child) {
 #button-bar button {
 	flex-grow: 1;
 
-	background: rgb(0, 122, 255);
+	background: var(--blue);
 	border: none;
 	border-radius: 5px;
 	color: #fff;
+	cursor: pointer;
 	font-family: inherit;
 	font-weight: 600;
 
 	padding: 5px;
 }
 #button-bar button:hover {
-	background: rgb(10, 132, 255);
+	background: var(--blue-light);
 }
 #button-bar button:not(:first-child) {
 	margin-left: 5px;

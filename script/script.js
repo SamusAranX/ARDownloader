@@ -6,10 +6,10 @@ function debugList(arr) {
 	}
 }
 
+/** Example: Returns "iphone-15-pro" for a site URL of https://www.apple.com/de/iphone-15-pro/?queries=and#hashes */
 function getPagePath() {
-	let parts = window.location.href.split('/');
-	let lastPart = parts.pop() || parts.pop();
-	return lastPart.split('#')[0].split('?')[0];
+	let pathParts = (new URL(window.location.href)).pathname.split("/");
+	return pathParts.pop() || pathParts.pop();
 }
 
 function getAppleARLinks() {
@@ -21,8 +21,6 @@ function getAppleARLinks() {
 	let dataUrlAttributes = ["urlRoot", "urlProduct", "urlOptionMap"];
 	let arURLs = Array.from(document.querySelectorAll("a[rel=ar]")).flatMap(e => {
 		if (dataUrlAttributes.every((attr) => (attr in e.dataset))) {
-			console.debug("New AR system (2023) detected");
-
 			let urls = [];
 			try {
 				let topObj = JSON.parse(e.dataset.urlOptionMap);
@@ -35,6 +33,7 @@ function getAppleARLinks() {
 				}
 			} catch(err) {
 				console.error(err);
+				throw new Error("Couldn't parse 2023 AR structure.");
 			}
 
 			return urls;
@@ -43,8 +42,6 @@ function getAppleARLinks() {
 			if (value)
 				return value;
 		}
-
-		return null;
 	});
 
 	// step 2: finding other elements that might hold URLs to AR files
@@ -79,7 +76,6 @@ function getAppleARLinks() {
 	// step 2.5: the data-ar-quicklook-attribs-by-model attribute might contain JSON containing more filenames
 	console.debug("Step 2.5: more attributes");
 	let arAttribsElements = document.querySelectorAll("[data-ar-quicklook-attribs-by-model]");
-
 	for (let i = 0; i < arAttribsElements.length; i++) {
 		let e = arAttribsElements[i];
 		let valueJSON = e.getAttribute("data-ar-quicklook-attribs-by-model");
@@ -99,6 +95,7 @@ function getAppleARLinks() {
 			}
 		} catch(err) {
 			console.error(err);
+			throw new Error("Couldn't parse data-ar-quicklook-attribs-by-model structure.");
 		}
 	}
 
@@ -133,8 +130,18 @@ function getAppleARLinks() {
 }
 
 function returnValue() {
+	let links = null;
+	let error = null;
+
+	try {
+		links = getAppleARLinks();
+	} catch(err) {
+		error = err;
+	}
+
 	return {
-		urls: getAppleARLinks(),
+		urls: links,
+		error: error,
 		path: getPagePath()
 	};
 }

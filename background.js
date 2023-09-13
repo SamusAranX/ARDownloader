@@ -1,35 +1,45 @@
 /* globals chrome */
 "use strict";
 
-chrome.webNavigation.onCompleted.addListener(details => {
-	let activeTab = details.tabId;
+function setBadgeText(tabId, text) {
+	chrome.action.setBadgeText({
+		"tabId": tabId,
+		"text": text
+	});
+}
 
-	if (!/^https:\/\/(?:.+\.)?apple\.com\/?.*?$/gmi.test(details.url)) {
+chrome.webNavigation.onCompleted.addListener(details => {
+	if (!/^(?:https:\/\/web\.archive\.org\/web\/\d+\/)?https:\/\/(?:www\.)?apple.com(?:\.cn)?(?:\/.*?)?$/gmi.test(details.url)) {
 		return;
 	}
 
+	let activeTab = details.tabId;
 	try {
-		chrome.scripting.executeScript({
-			files: ["script/script.js"],
-			target: { tabId: activeTab }
-		}, function (injectionResults) {
-			if (!injectionResults) {
-				return;
-			}
+		chrome.scripting
+			.executeScript({
+				target: { tabId: activeTab },
+				files: ["script/script.js"],
+			})
+			.then(injectionResults => {
+				if (!injectionResults) {
+					return;
+				}
 
-			let result = injectionResults[0];
-			let numURLs = result.result.urls.length;
+				let result = injectionResults[0];
+				if (result.result.error) {
+					setBadgeText(activeTab, "!");
+					return;
+				}
 
-			if (numURLs === 0) {
-				return;
-			}
-
-			chrome.action.setBadgeText({
-				"tabId": activeTab,
-				"text": numURLs.toString()
+				let numURLs = result.result.urls.length;
+				setBadgeText(activeTab, numURLs.toString());
+			},
+			error => {
+				console.error(error);
+				setBadgeText(activeTab, "!");
 			});
-		});
 	} catch (exc) {
 		console.error(exc);
+		setBadgeText(activeTab, "!");
 	}
 });
