@@ -2,7 +2,8 @@
 	"manifest_version": 3,
 	"name": "AR Downloader",
 	"author": "Emma Alyx Wunder",
-	"description": "Downloads all AR files from a given apple.com/apple.com.cn product page",
+	"homepage_url": "https://emmalyx.dev",
+	"description": "Downloads all AR files from a given Apple product page",
 	"version": "1.6.1",
 	"permissions": ["clipboardWrite", "downloads", "scripting", "webNavigation"],
 	"host_permissions": [
