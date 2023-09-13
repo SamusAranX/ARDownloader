@@ -13,25 +13,39 @@ function getPagePath() {
 }
 
 function getAppleARLinks() {
+	let urlOrigin = (new URL(window.location.href)).origin;
+	console.debug("site host:", urlOrigin);
+
 	// step 1: finding all <a> elements with rel=ar set
 	console.debug("Step 1: a[rel=ar]");
-	let arURLs = Array.from(document.querySelectorAll("a[rel=ar]")).map(e => {
-		let value = e.href; // expected to be absolute link
-		if (value)
-			return value;
+	let dataUrlAttributes = ["urlRoot", "urlProduct", "urlOptionMap"];
+	let arURLs = Array.from(document.querySelectorAll("a[rel=ar]")).flatMap(e => {
+		if (dataUrlAttributes.every((attr) => (attr in e.dataset))) {
+			console.debug("New AR system (2023) detected");
+
+			let urls = [];
+			try {
+				let topObj = JSON.parse(e.dataset.urlOptionMap);
+				for (const colorKey of Object.keys(topObj.color)) {
+					let color = topObj.color[colorKey];
+					for (const sizeKey of Object.keys(topObj.size)) {
+						let size = topObj.size[sizeKey];
+						urls.push(`${urlOrigin}${e.dataset.urlRoot}/${e.dataset.urlProduct}/${size}_${color}.usdz`);
+					}
+				}
+			} catch(err) {
+				console.error(err);
+			}
+
+			return urls;
+		} else {
+			let value = e.href; // expected to be absolute link
+			if (value)
+				return value;
+		}
 
 		return null;
 	});
-
-	let usdzPrefix = "";
-	if (arURLs.length > 0) {
-		let tempURL = arURLs[0];
-		let tempFilename = tempURL.split("/").pop();
-		usdzPrefix = tempURL.substring(0, tempURL.length - tempFilename.length);
-	}
-
-	if (usdzPrefix !== "")
-		console.debug("usdz prefix:", usdzPrefix);
 
 	// step 2: finding other elements that might hold URLs to AR files
 	console.debug("Step 2: attributes");
@@ -88,8 +102,8 @@ function getAppleARLinks() {
 		}
 	}
 
+	// step 3 (ONLY if no files have been found): apply regex to body.innerHTML
 	if (arURLs.length === 0) {
-		// step 3 (ONLY if no files have been found): apply regex to body.innerHTML
 		console.debug("Step 3: regex");
 
 		let arFallbackRegex = /\"([a-z0-9\/\-_\.]+?\.(?:usdz|reality))\"/gmi;
@@ -100,14 +114,16 @@ function getAppleARLinks() {
 
 	// cleanup: make every relative URL absolute
 	let absURLs = [];
-	for (let i = 0; i < arURLs.length; i++) {
-		let url = arURLs[i];
+	for (const url of arURLs) {
+		if (url == null)
+			continue;
+
 		if (url.startsWith("http")) {
 			absURLs.push(url);
 			continue; // url is already absolute
 		}
 
-		let newURL = new URL(url, usdzPrefix);
+		let newURL = new URL(url, urlOrigin);
 		absURLs.push(newURL.href);
 	}
 
