@@ -141,9 +141,17 @@ function displayURLs(urls) {
 			filename = getFilenameFromURL(url);
 		}
 
-		if (!detectedFiveG && /5g/i.test(url)) {
-			detectedFiveG = true;
-			divInfo.appendChild(createElement("p", "<b>Note:</b> Some or all of these URLs are for US-only 5G models. Visit a non-US version of this product page to look for more files."));
+		if (!detectedFiveG) {
+			let noFiveG = /no5g/i.test(url);
+			let fiveG = /5g/i.test(url);
+			if (fiveG)
+				detectedFiveG = true;
+
+			if (noFiveG) {
+				divInfo.appendChild(createElement("p", "<b>Note:</b> Some or all of these URLs are for non-US models. Visit a US version of this product page to look for more files."));
+			} else if (fiveG) {
+				divInfo.appendChild(createElement("p", "<b>Note:</b> Some or all of these URLs are for US-only models. Visit a non-US version of this product page to look for more files."));
+			}
 		}
 
 		let option = createElement("option", filename);
