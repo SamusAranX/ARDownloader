@@ -2,9 +2,13 @@
 "use strict";
 
 function setBadgeText(tabId, text) {
+	chrome.action.setBadgeBackgroundColor({
+		tabId: tabId,
+		color: "#434344"
+	});
 	chrome.action.setBadgeText({
-		"tabId": tabId,
-		"text": text
+		tabId: tabId,
+		text: text
 	});
 }
 
