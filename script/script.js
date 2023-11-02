@@ -12,6 +12,85 @@ function getPagePath() {
 	return pathParts.pop() || pathParts.pop();
 }
 
+/*
+	# known url maps so far:
+	- iPhone 15:
+	{
+		"color": {
+			"DarkBlue": "blue_titanium_5G",
+			"DarkTi": "black_titanium_5G",
+			"LightTi": "white_titanium_5G",
+			"TiGray": "natural_titanium_5G"
+		},
+		"size": {
+			"base": "iphone_15_pro_max_iphone_15_pro",
+			"small": "iphone_15_pro",
+			"large": "iphone_15_pro_max"
+		}
+	}
+
+	- M3 MacBook Pro:
+	{
+		"small": {
+			"Dark": {
+				"model": "macbook_pro_m3_pro_14_space_black.usdz",
+				"acaClick": "prop3:view space black macbook pro 14 in your space",
+				"acaTitle": "view space black macbook pro 14 in your space",
+				"ariaLabel": "View in your space, Macbook Pro 14 inches in Space Black"
+			},
+			"Light": {
+				"model": "macbook_pro_m3_pro_14_silver.usdz",
+				"acaClick": "prop3:view silver macbook pro 14 in your space",
+				"acaTitle": "view silver macbook pro 14 in your space",
+				"ariaLabel": "View in your space, Macbook Pro 14 inches in Silver"
+			}
+		},
+		"large": {
+			"Dark": {
+				"model": "macbook_pro_m3_pro_16_space_black.usdz",
+				"acaClick": "prop3:view space black macbook pro 16 in your space",
+				"acaTitle": "view space black macbook pro 16 in your space",
+				"ariaLabel": "View in your space, Macbook Pro 16 inches in Space Black"
+			},
+			"Light": {
+				"model": "macbook_pro_m3_pro_16_silver.usdz",
+				"acaClick": "prop3:view silver macbook pro 16 in your space",
+				"acaTitle": "view silver macbook pro 16 in your space",
+				"ariaLabel": "View in your space, Macbook Pro 16 inches in Silver"
+			}
+		}
+	}
+*/
+function parseURLOptionMap(dataset, urlOrigin) {
+	let urls = [];
+	let topObj = JSON.parse(dataset.urlOptionMap);
+
+	if (["color", "size"].every((key) => (key in topObj))) {
+		// iPhone 15 (Pro)
+		for (const colorKey of Object.keys(topObj.color)) {
+			let color = topObj.color[colorKey];
+			for (const sizeKey of Object.keys(topObj.size)) {
+				let size = topObj.size[sizeKey];
+				urls.push(`${urlOrigin}${dataset.urlRoot}/${dataset.urlProduct}/${size}_${color}.usdz`);
+			}
+		}
+	} else if (["small", "large"].every((key) => (key in topObj))) {
+		// M3 MacBook Pro
+		for (const sizeKey of Object.keys(topObj)) {
+			let sizeObj = topObj[sizeKey];
+			for (const colorKey of Object.keys(sizeObj)) {
+				let colorObj = sizeObj[colorKey];
+				let model = colorObj.model;
+				urls.push(`${urlOrigin}${dataset.urlRoot}/${dataset.urlProduct}/${model}`);
+			}
+		}
+	} else {
+		throw new Error("Unsupported option map structure");
+	}
+
+	return urls;
+}
+
 function getAppleARLinks() {
 	let urlOrigin = (new URL(window.location.href)).origin;
 	console.debug("site host:", urlOrigin);
@@ -23,17 +102,11 @@ function getAppleARLinks() {
 		if (dataUrlAttributes.every((attr) => (attr in e.dataset))) {
 			let urls = [];
 			try {
-				let topObj = JSON.parse(e.dataset.urlOptionMap);
-				for (const colorKey of Object.keys(topObj.color)) {
-					let color = topObj.color[colorKey];
-					for (const sizeKey of Object.keys(topObj.size)) {
-						let size = topObj.size[sizeKey];
-						urls.push(`${urlOrigin}${e.dataset.urlRoot}/${e.dataset.urlProduct}/${size}_${color}.usdz`);
-					}
-				}
+				let newURLs = parseURLOptionMap(e.dataset, urlOrigin);
+				urls = urls.concat(newURLs);
 			} catch(err) {
 				console.error(err);
-				throw new Error("Couldn't parse 2023 AR structure.");
+				throw err;
 			}
 
 			return urls;
