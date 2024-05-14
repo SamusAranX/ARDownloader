@@ -6,103 +6,68 @@ function debugList(arr) {
 	}
 }
 
+/** Example: Returns "https://www.apple.com/" for a site URL of https://www.apple.com/de/iphone-15-pro/?queries=and#hashes */
+function getPageOrigin() {
+	return (new URL(window.location.href)).origin;
+}
+
 /** Example: Returns "iphone-15-pro" for a site URL of https://www.apple.com/de/iphone-15-pro/?queries=and#hashes */
 function getPagePath() {
 	let pathParts = (new URL(window.location.href)).pathname.split("/");
 	return pathParts.pop() || pathParts.pop();
 }
 
-/*
-	# known url maps so far:
-	- iPhone 15:
-	{
-		"color": {
-			"DarkBlue": "blue_titanium_5G",
-			"DarkTi": "black_titanium_5G",
-			"LightTi": "white_titanium_5G",
-			"TiGray": "natural_titanium_5G"
-		},
-		"size": {
-			"base": "iphone_15_pro_max_iphone_15_pro",
-			"small": "iphone_15_pro",
-			"large": "iphone_15_pro_max"
+function getModelsFromOptionMap(dict, level=0) {
+	// console.debug(`recursive: ${level}`, dict);
+	const needleElements = ["model", "acaClick", "acaTitle", "ariaLabel"];
+
+	// no infinite recursion here
+	if (level > 3) {
+		console.debug("recursiveObjFunc bailing");
+		return models;
+	}
+
+	let models = [];
+	for (const [key, value] of Object.entries(dict)) {
+		if (Object.keys(value).some(k => needleElements.includes(k))) {
+			// found what we're looking for
+			models.push(value["model"]);
+		} else {
+			// keep going deeper
+			let moreModels = getModelsFromOptionMap(value, ++level);
+			models.push(...moreModels);
 		}
 	}
 
-	- M3 MacBook Pro:
-	{
-		"small": {
-			"Dark": {
-				"model": "macbook_pro_m3_pro_14_space_black.usdz",
-				"acaClick": "prop3:view space black macbook pro 14 in your space",
-				"acaTitle": "view space black macbook pro 14 in your space",
-				"ariaLabel": "View in your space, Macbook Pro 14 inches in Space Black"
-			},
-			"Light": {
-				"model": "macbook_pro_m3_pro_14_silver.usdz",
-				"acaClick": "prop3:view silver macbook pro 14 in your space",
-				"acaTitle": "view silver macbook pro 14 in your space",
-				"ariaLabel": "View in your space, Macbook Pro 14 inches in Silver"
-			}
-		},
-		"large": {
-			"Dark": {
-				"model": "macbook_pro_m3_pro_16_space_black.usdz",
-				"acaClick": "prop3:view space black macbook pro 16 in your space",
-				"acaTitle": "view space black macbook pro 16 in your space",
-				"ariaLabel": "View in your space, Macbook Pro 16 inches in Space Black"
-			},
-			"Light": {
-				"model": "macbook_pro_m3_pro_16_silver.usdz",
-				"acaClick": "prop3:view silver macbook pro 16 in your space",
-				"acaTitle": "view silver macbook pro 16 in your space",
-				"ariaLabel": "View in your space, Macbook Pro 16 inches in Silver"
-			}
-		}
-	}
-*/
-function parseURLOptionMap(dataset, urlOrigin) {
-	let urls = [];
-	let topObj = JSON.parse(dataset.urlOptionMap);
+	return models;
+};
 
-	if (["color", "size"].every((key) => (key in topObj))) {
-		// iPhone 15 (Pro)
-		for (const colorKey of Object.keys(topObj.color)) {
-			let color = topObj.color[colorKey];
-			for (const sizeKey of Object.keys(topObj.size)) {
-				let size = topObj.size[sizeKey];
-				urls.push(`${urlOrigin}${dataset.urlRoot}/${dataset.urlProduct}/${size}_${color}.usdz`);
-			}
-		}
-	} else if (["small", "large"].every((key) => (key in topObj))) {
-		// M3 MacBook Pro
-		for (const sizeKey of Object.keys(topObj)) {
-			let sizeObj = topObj[sizeKey];
-			for (const colorKey of Object.keys(sizeObj)) {
-				let colorObj = sizeObj[colorKey];
-				let model = colorObj.model;
-				urls.push(`${urlOrigin}${dataset.urlRoot}/${dataset.urlProduct}/${model}`);
-			}
-		}
-	} else {
-		throw new Error("Unsupported option map structure");
-	}
+function parseURLOptionMap(dataset) {
+	let optionMap = JSON.parse(dataset.urlOptionMap);
+	let models = getModelsFromOptionMap(optionMap);
 
-	return urls;
+	return models;
 }
 
 function getAppleARLinks() {
-	let urlOrigin = (new URL(window.location.href)).origin;
-	console.debug("site host:", urlOrigin);
-
 	// step 1: finding all <a> elements with rel=ar set
 	console.debug("Step 1: a[rel=ar]");
-	let dataUrlAttributes = ["urlRoot", "urlProduct", "urlOptionMap"];
+
+	const pageOrigin = getPageOrigin();
+	const dataUrlAttributes = ["urlRoot", "urlProduct", "urlOptionMap"];
 	let arURLs = Array.from(document.querySelectorAll("a[rel=ar]")).flatMap(e => {
+		// console.debug(e, e.dataset);
+
+		const urlRoot = e.dataset["urlRoot"];
+		const urlProduct = e.dataset["urlProduct"];
 		if (dataUrlAttributes.every((attr) => (attr in e.dataset))) {
 			let urls = [];
 			try {
-				let newURLs = parseURLOptionMap(e.dataset, urlOrigin);
+				// make urls absolute using urlRoot and urlProduct
+				let newURLs = parseURLOptionMap(e.dataset).map(u => {
+					return (new URL(`${urlRoot}/${urlProduct}/${u}`, pageOrigin)).toString();
+				});
+
 				urls = urls.concat(newURLs);
 			} catch(err) {
 				console.error(err);
@@ -116,6 +81,8 @@ function getAppleARLinks() {
 				return value;
 		}
 	});
+
+	console.debug("AR URLs:", arURLs);
 
 	// step 2: finding other elements that might hold URLs to AR files
 	console.debug("Step 2: attributes");
@@ -158,9 +125,9 @@ function getAppleARLinks() {
 		console.debug(valueJSON);
 
 		try {
-			let topObj = JSON.parse(valueJSON);
-			for (let deviceKey in topObj) {
-				let deviceObj = topObj[deviceKey];
+			let optionMap = JSON.parse(valueJSON);
+			for (let deviceKey in optionMap) {
+				let deviceObj = optionMap[deviceKey];
 				if (!deviceObj.hasOwnProperty("data-ar-quicklook-usdz"))
 					continue;
 
@@ -184,6 +151,7 @@ function getAppleARLinks() {
 
 	// cleanup: make every relative URL absolute
 	let absURLs = [];
+	let urlOrigin = getPageOrigin();
 	for (const url of arURLs) {
 		if (url == null)
 			continue;
@@ -198,7 +166,7 @@ function getAppleARLinks() {
 	}
 
 	absURLs = [...new Set(absURLs)].sort();
-	debugList(absURLs);
+	console.debug("absolute URLs:", absURLs);
 	return absURLs;
 }
 
