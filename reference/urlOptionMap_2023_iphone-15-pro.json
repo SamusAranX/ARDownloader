@@ -1,0 +1,13 @@
+{
+    "color": {
+        "DarkBlue": "blue_titanium_5G",
+        "DarkTi": "black_titanium_5G",
+        "LightTi": "white_titanium_5G",
+        "TiGray": "natural_titanium_5G"
+    },
+    "size": {
+        "base": "iphone_15_pro_max_iphone_15_pro",
+        "small": "iphone_15_pro",
+        "large": "iphone_15_pro_max"
+    }
+}

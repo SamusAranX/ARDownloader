@@ -85,6 +85,7 @@ function handleUnsupportedSite() {
 function handleError(err) {
 	deadEnd();
 
+	console.error("handleError:", err);
 	if (err) {
 		paraMessage.innerHTML = err;
 	} else {
@@ -128,7 +129,7 @@ function displayURLs(urls) {
 		addPreviousPart = true;
 	}
 
-	let detectedFiveG = false;
+	let regionSpecificModelsFound = false;
 
 	urls.forEach(url => {
 		let filename;
@@ -141,15 +142,18 @@ function displayURLs(urls) {
 			filename = getFilenameFromURL(url);
 		}
 
-		if (!detectedFiveG) {
+		if (!regionSpecificModelsFound) {
 			let noFiveG = /no5g/i.test(url);
 			let fiveG = /5g/i.test(url);
-			if (fiveG)
-				detectedFiveG = true;
+			let noSim = /no-sim/i.test(url);
+			let sim = /sim/i.test(url);
 
-			if (noFiveG) {
+			if (fiveG || sim)
+				regionSpecificModelsFound = true;
+
+			if (noFiveG || noSim) {
 				divInfo.appendChild(createElement("p", "<b>Note:</b> Some or all of these URLs are for non-US models. Visit a US version of this product page to look for more files."));
-			} else if (fiveG) {
+			} else if (fiveG || sim) {
 				divInfo.appendChild(createElement("p", "<b>Note:</b> Some or all of these URLs are for US-only models. Visit a non-US version of this product page to look for more files."));
 			}
 		}

@@ -6,72 +6,95 @@ function debugList(arr) {
 	}
 }
 
-/** Example: Returns "https://www.apple.com/" for a site URL of https://www.apple.com/de/iphone-15-pro/?queries=and#hashes */
-function getPageOrigin() {
-	return (new URL(window.location.href)).origin;
-}
-
 /** Example: Returns "iphone-15-pro" for a site URL of https://www.apple.com/de/iphone-15-pro/?queries=and#hashes */
 function getPagePath() {
 	let pathParts = (new URL(window.location.href)).pathname.split("/");
 	return pathParts.pop() || pathParts.pop();
 }
 
-function getModelsFromOptionMap(dict, level=0) {
-	// console.debug(`recursive: ${level}`, dict);
-	const needleElements = ["model", "acaClick", "acaTitle", "ariaLabel"];
+function hasAllAttributes(attrs, obj) {
+	return attrs.every((attr) => (attr in obj));
+}
 
-	// no infinite recursion here
-	if (level > 3) {
-		console.debug("recursiveObjFunc bailing");
-		return models;
+// the 2023 url option map has "color" and "size" keys. check whether they exist and if so, assemble urls
+function urlOptionMap2023(dataset, urlOrigin) {
+	try {
+		let urls = [];
+		let optionMap = JSON.parse(dataset.urlOptionMap);
+		console.debug(optionMap);
+		for (const colorKey of Object.keys(optionMap.color)) {
+			let color = optionMap.color[colorKey];
+			for (const sizeKey of Object.keys(optionMap.size)) {
+				let size = optionMap.size[sizeKey];
+				urls.push(`${urlOrigin}${dataset.urlRoot}/${dataset.urlProduct}/${size}_${color}.usdz`);
+			}
+		}
+		return urls;
+	} catch(err) {
+		throw new Error(`Couldn't parse 2023 AR structure.\n${err}`);
 	}
+}
 
-	let models = [];
-	for (const [key, value] of Object.entries(dict)) {
-		if (Object.keys(value).some(k => needleElements.includes(k))) {
-			// found what we're looking for
-			models.push(value["model"]);
-		} else {
-			// keep going deeper
-			let moreModels = getModelsFromOptionMap(value, ++level);
-			models.push(...moreModels);
+// the 2024 url option map needs to be parsed recursively.
+// at the lowest level there should be an object with a "model" key that contains the last part of the usdz url.
+function urlOptionMap2024(dataset, urlOrigin) {
+	let recursiveModelSearch = function(urls, branch, depth=0) {
+		if (depth > 4) {
+			throw new Error("gone off the deep end");
+		}
+
+		for (const key of Object.keys(branch)) {
+			if (key == "model") {
+				urls.push(branch[key]);
+				return;
+			} else {
+				recursiveModelSearch(urls, branch[key], depth+1);
+			}
 		}
 	}
 
-	return models;
-};
-
-function parseURLOptionMap(dataset) {
 	let optionMap = JSON.parse(dataset.urlOptionMap);
-	let models = getModelsFromOptionMap(optionMap);
 
-	return models;
+	console.debug(dataset);
+	console.debug(optionMap);
+
+	try {
+		let urls = [];
+		recursiveModelSearch(urls, optionMap);
+		return urls.map(u => {
+			return `${urlOrigin}${dataset.urlRoot}/${dataset.urlProduct}/${u}`;
+		});
+	} catch(err) {
+		throw new Error(`Couldn't parse 2024 AR structure: ${err}`);
+	}
 }
 
 function getAppleARLinks() {
+	let urlOrigin = (new URL(window.location.href)).origin;
+	console.debug("url origin:", urlOrigin);
+
 	// step 1: finding all <a> elements with rel=ar set
 	console.debug("Step 1: a[rel=ar]");
+	let dataUrlAttributes = ["urlRoot", "urlProduct", "urlOptionMap"];
 
-	const pageOrigin = getPageOrigin();
-	const dataUrlAttributes = ["urlRoot", "urlProduct", "urlOptionMap"];
 	let arURLs = Array.from(document.querySelectorAll("a[rel=ar]")).flatMap(e => {
-		// console.debug(e, e.dataset);
-
-		const urlRoot = e.dataset["urlRoot"];
-		const urlProduct = e.dataset["urlProduct"];
-		if (dataUrlAttributes.every((attr) => (attr in e.dataset))) {
-			let urls = [];
+		if (hasAllAttributes(dataUrlAttributes, e.dataset)) {
 			try {
-				// make urls absolute using urlRoot and urlProduct
-				let newURLs = parseURLOptionMap(e.dataset).map(u => {
-					return (new URL(`${urlRoot}/${urlProduct}/${u}`, pageOrigin)).toString();
-				});
+				if (hasAllAttributes(["color", "size"], JSON.parse(e.dataset.urlOptionMap))) {
+					console.info("url option map matches 2023 version");
+					return urlOptionMap2023(e.dataset, urlOrigin);
+				}
 
-				urls = urls.concat(newURLs);
+				let urls = urlOptionMap2024(e.dataset, urlOrigin);
+				if (urls) {
+					console.info("url option map matches 2024 version");
+					return urls;
+				}
+
+				// this can only be reached if none of the preceding methods succeeded
+				console.error("Unknown URL Option Map version!", JSON.parse(e.dataset.urlOptionMap));
 			} catch(err) {
-				console.error(err);
-				throw err;
+				console.error("Unknown URL Option Map version!", err);
 			}
 
 			return urls;
@@ -81,8 +104,6 @@ function getAppleARLinks() {
 				return value;
 		}
 	});
-
-	console.debug("AR URLs:", arURLs);
 
 	// step 2: finding other elements that might hold URLs to AR files
 	console.debug("Step 2: attributes");
@@ -125,9 +146,9 @@ function getAppleARLinks() {
 		console.debug(valueJSON);
 
 		try {
-			let optionMap = JSON.parse(valueJSON);
-			for (let deviceKey in optionMap) {
-				let deviceObj = optionMap[deviceKey];
+			let topObj = JSON.parse(valueJSON);
+			for (let deviceKey in topObj) {
+				let deviceObj = topObj[deviceKey];
 				if (!deviceObj.hasOwnProperty("data-ar-quicklook-usdz"))
 					continue;
 
@@ -151,7 +172,6 @@ function getAppleARLinks() {
 
 	// cleanup: make every relative URL absolute
 	let absURLs = [];
-	let urlOrigin = getPageOrigin();
 	for (const url of arURLs) {
 		if (url == null)
 			continue;
@@ -166,7 +186,7 @@ function getAppleARLinks() {
 	}
 
 	absURLs = [...new Set(absURLs)].sort();
-	console.debug("absolute URLs:", absURLs);
+	debugList(absURLs);
 	return absURLs;
 }
 

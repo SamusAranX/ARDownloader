@@ -1,0 +1,44 @@
+{
+    "blue": {
+        "model": "imac-with-accessories-blue.usdz",
+        "acaClick": "prop3:view imac in all colors in your space",
+        "acaTitle": "view imac in all colors in your space",
+        "ariaLabel": "View iMac in blue with matching keyboard and mouse"
+    },
+    "purple": {
+        "model": "imac-with-accessories-purple.usdz",
+        "acaClick": "prop3:view imac in all colors in your space",
+        "acaTitle": "view imac in all colors in your space",
+        "ariaLabel": "View iMac in purple with matching keyboard and mouse"
+    },
+    "pink": {
+        "model": "imac-with-accessories-pink.usdz",
+        "acaClick": "prop3:view imac in all colors in your space",
+        "acaTitle": "view imac in all colors in your space",
+        "ariaLabel": "View iMac in pink with matching keyboard and mouse"
+    },
+    "orange": {
+        "model": "imac-with-accessories-orange.usdz",
+        "acaClick": "prop3:view imac in all colors in your space",
+        "acaTitle": "view imac in all colors in your space",
+        "ariaLabel": "View iMac in orange with matching keyboard and mouse"
+    },
+    "yellow": {
+        "model": "imac-with-accessories-yellow.usdz",
+        "acaClick": "prop3:view imac in all colors in your space",
+        "acaTitle": "view imac in all colors in your space",
+        "ariaLabel": "View iMac in yellow with matching keyboard and mouse"
+    },
+    "green": {
+        "model": "imac-with-accessories-green.usdz",
+        "acaClick": "prop3:view imac in all colors in your space",
+        "acaTitle": "view imac in all colors in your space",
+        "ariaLabel": "View iMac in green with matching keyboard and mouse"
+    },
+    "silver": {
+        "model": "imac-with-accessories-silver.usdz",
+        "acaClick": "prop3:view imac in all colors in your space",
+        "acaTitle": "view imac in all colors in your space",
+        "ariaLabel": "View iMac in silver with matching keyboard and mouse"
+    }
+}
