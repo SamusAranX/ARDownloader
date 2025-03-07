@@ -105,6 +105,20 @@ function getAppleARLinks() {
 		}
 	});
 
+	// https://www.apple.com/105/media/us/ipad-11/2025/21af9618-666d-4368-9fb9-38822c35dc35/ar/ipad-11-silver.usdz
+	// data-base-path -> data-quicklook-udz
+	console.log("Step 1.1: Checking for 2025 structure");
+	let colorsGallery = document.querySelector("#colors-gallery[role=group]");
+	if (colorsGallery) {
+		let basePath = colorsGallery.dataset.basePath;
+		let colorNavItems = Array.from(colorsGallery.querySelectorAll("li.colornav-item input[type=radio][data-quicklook-udz]"));
+		let usdzURLs = colorNavItems.map(e => {
+			let fname = e.dataset.quicklookUdz;
+			return `${basePath}${fname}`;
+		});
+		arURLs = arURLs.concat(usdzURLs);
+	}
+
 	// step 2: finding other elements that might hold URLs to AR files
 	console.debug("Step 2: attributes");
 	let arAttributes = [
@@ -185,6 +199,10 @@ function getAppleARLinks() {
 		absURLs.push(newURL.href);
 	}
 
+	// usdz URLs are usually really long, if any shorter URLs made it through, they're probably invalid
+	absURLs = absURLs.filter(url => url.length > 60);
+
+	// deduplicate URLs
 	absURLs = [...new Set(absURLs)].sort();
 	debugList(absURLs);
 	return absURLs;
